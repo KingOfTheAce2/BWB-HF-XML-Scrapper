@@ -1,0 +1,19 @@
+name: Clean BWB dataset
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run cleaning script
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python clean_bwb.py
