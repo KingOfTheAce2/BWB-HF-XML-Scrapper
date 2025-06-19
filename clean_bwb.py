@@ -1,8 +1,8 @@
 import re
 from datasets import load_dataset, DatasetDict
 from datasets import Dataset
-from huggingface_hub import HfApi
-
+import os
+from huggingface_hub import HfApi, login
 
 def strip_xml(text: str) -> str:
     """Remove XML tags from text."""
@@ -25,9 +25,12 @@ def main():
 
     cleaned_dataset = DatasetDict({"train": cleaned_dataset})
 
-    # push to new repository (replace with your repo)
-    cleaned_dataset.push_to_hub("your-username/clean-basiswettenbestand")
-
+    # push to new repository
+    repo_id = "vGassen/Dutch-Basisbestandwetten-Legislation-Laws-XML-Clean"
+    token = os.environ.get("HF_TOKEN")
+    if token:
+        login(token=token)
+    cleaned_dataset.push_to_hub(repo_id)
 
 if __name__ == "__main__":
     main()
