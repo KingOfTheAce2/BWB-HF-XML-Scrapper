@@ -4,7 +4,6 @@ from datasets import Dataset
 import os
 from huggingface_hub import HfApi, login
 
-
 def strip_xml(text: str) -> str:
     """Remove XML tags from text."""
     # simple regex to drop tags
@@ -32,7 +31,6 @@ def main():
     if token:
         login(token=token)
     cleaned_dataset.push_to_hub(repo_id)
-
 
 if __name__ == "__main__":
     main()
