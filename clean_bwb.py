@@ -1,36 +1,42 @@
-import re
-from datasets import load_dataset, DatasetDict
-from datasets import Dataset
+"""Clean BWB dataset by stripping XML tags and upload to HF."""
+
 import os
+import re
+from datasets import Dataset, load_dataset
 from huggingface_hub import HfApi, login
 
+SOURCE_DATASET = "vGassen/Dutch-Basisbestandwetten-Legislation-Laws"
+TARGET_DATASET = "vGassen/Dutch-Basisbestandwetten-Legislation-Laws-XML-Clean"
+
+
 def strip_xml(text: str) -> str:
-    """Remove XML tags from text."""
-    # simple regex to drop tags
+    """Remove XML tags from a string."""
     return re.sub(r"<[^>]+>", "", text)
 
 
-def main():
-    # load original dataset
-    dataset = load_dataset("vGassen/Dutch-Basisbestandwetten-Legislation-Laws", split="train")
+def main() -> None:
+    # Stream the dataset to avoid storing the raw XML locally
+    dataset = load_dataset(SOURCE_DATASET, split="train", streaming=True)
 
-    # transform dataset by stripping XML tags
-    cleaned_content = [strip_xml(row["content"]) for row in dataset]
+    cleaned_records = []
+    for record in dataset:
+        raw_text = record.get("content") or record.get("text", "")
+        cleaned_records.append(
+            {
+                "url": record.get("url"),
+                "content": strip_xml(raw_text),
+                "source": "Basiswettenbestand",
+            }
+        )
 
-    cleaned_dataset = Dataset.from_dict({
-        "url": dataset["url"],
-        "content": cleaned_content,
-        "source": ["Basiswettenbestand"] * len(dataset),
-    })
+    cleaned_dataset = Dataset.from_list(cleaned_records)
 
-    cleaned_dataset = DatasetDict({"train": cleaned_dataset})
-
-    # push to new repository
-    repo_id = "vGassen/Dutch-Basisbestandwetten-Legislation-Laws-XML-Clean"
     token = os.environ.get("HF_TOKEN")
     if token:
         login(token=token)
-    cleaned_dataset.push_to_hub(repo_id)
+    HfApi().create_repo(repo_id=TARGET_DATASET, repo_type="dataset", exist_ok=True)
+    cleaned_dataset.push_to_hub(TARGET_DATASET, private=False)
+
 
 if __name__ == "__main__":
     main()
