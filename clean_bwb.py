@@ -18,18 +18,16 @@ def main() -> None:
     # Stream the dataset to avoid storing the raw XML locally
     dataset = load_dataset(SOURCE_DATASET, split="train", streaming=True)
 
-    cleaned_records = []
-    for record in dataset:
-        raw_text = record.get("content") or record.get("text", "")
-        cleaned_records.append(
-            {
+    def record_generator():
+        for record in dataset:
+            raw_text = record.get("content") or record.get("text", "")
+            yield {
                 "url": record.get("url"),
                 "content": strip_xml(raw_text),
                 "source": "Basiswettenbestand",
             }
-        )
 
-    cleaned_dataset = Dataset.from_list(cleaned_records)
+    cleaned_dataset = Dataset.from_generator(record_generator)
 
     token = os.environ.get("HF_TOKEN")
     if token:
