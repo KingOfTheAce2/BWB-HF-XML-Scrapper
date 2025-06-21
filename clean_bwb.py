@@ -29,11 +29,20 @@ def main() -> None:
     buffer = []
     shard_idx = 0
 
+    skip_suffixes = ("manifest.xml", ".WTI")
+
     for record in dataset:
+        url = record.get("url") or ""
+        if url.lower().endswith(skip_suffixes):
+            continue
+
         raw_text = record.get("content") or record.get("text", "")
+        if not raw_text.strip():
+            continue
+
         buffer.append(
             {
-                "url": record.get("url"),
+                "url": url,
                 "content": strip_xml(raw_text),
                 "source": "Basiswettenbestand",
             }
