@@ -8,6 +8,18 @@ from huggingface_hub import HfApi, login
 
 SOURCE_DATASET = "vGassen/Dutch-Basisbestandwetten-Legislation-Laws"
 TARGET_DATASET = "vGassen/Dutch-Basisbestandwetten-Legislation-Laws-XML-Clean"
+
+# Only keep documents whose type matches one of the allowed types.  The dataset
+# contains many different kinds of regulations.  By default no filtering is
+# applied, but the constant below can be customised to restrict the output to
+# specific document types.  The value should contain lower‑case strings as they
+# appear in the dataset under either the ``type`` or ``document_type`` field.
+ALLOWED_TYPES = {
+    "ambv",
+    "ministeriele-regeling",
+    "kb",
+    "wet",
+}
 CHUNK_SIZE = 1000
 
 
@@ -34,6 +46,10 @@ def main() -> None:
     for record in dataset:
         url = record.get("url") or ""
         if url.lower().endswith(skip_suffixes):
+            continue
+
+        doc_type = (record.get("type") or record.get("document_type") or "").lower()
+        if ALLOWED_TYPES and doc_type and doc_type not in ALLOWED_TYPES:
             continue
 
         raw_text = record.get("content") or record.get("text", "")
@@ -79,3 +95,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
