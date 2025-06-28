@@ -55,6 +55,9 @@ def main() -> None:
         raw_text = record.get("content") or record.get("text", "")
         if not raw_text.strip():
             continue
+        if not raw_text.lstrip().startswith("<"):
+            # Skip non-XML records such as index entries.
+            continue
 
         buffer.append(
             {
